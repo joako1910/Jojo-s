@@ -1,8 +1,22 @@
 import { useState } from "react";
-import { parrafos } from "./Array-Parrafos";
-import { imagenes } from "./Imagenes";
 export function Page() {
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [motivos, setMotivos] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchMotivo = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/motivos");
+      const data = await res.json();
+      if (data.motivo) {
+        setMotivos([...motivos, data.motivo]);
+      }
+    } catch (err) {
+      console.error("Error al general motivo", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-purple-900 via-pink-600 to-yellow-400 flex items-center justify-center relative overflow-hidden">
@@ -22,27 +36,24 @@ export function Page() {
             un estilo visual único, ofreciendo una experiencia emocionante y
             entretenida que no te puedes perder
           </p>
-          {parrafos.slice(0, visibleCount).map((text, index) => (
+          {motivos.map((motivo, index) => (
             <p
               key={index}
               className="mt-6 text-yellow-300 text-xl italic tracking-wide bg-black bg-opacity-50 p-2 rounded text-center"
             >
-              {text}
+              {motivo}
             </p>
           ))}
         </div>
-        {visibleCount < parrafos.length && (
-          <button
-            onClick={() => {
-              if (visibleCount < parrafos.length) {
-                setVisibleCount(visibleCount + 1);
-              }
-            }}
-            className="mt-8 px-8 py-4 bg_black text-black-500 bg-yellow-100 font-bold text-xl border-4 border-yellow-300 hover:scale-110 hover:bg-yellow-300 gover:text-black transition duration-300"
-          >
-            TODAVIA NO SOY TAN PUTO Y NECESITO MAS MOTIVOS
-          </button>
-        )}
+
+        <button
+          onClick={fetchMotivo}
+          className="mt-8 px-8 py-4 bg_black text-black-500 bg-yellow-100 font-bold text-xl border-4 border-yellow-300 hover:scale-110 hover:bg-yellow-300 gover:text-black transition duration-300"
+        >
+          {loading
+            ? "Generando motivo ..."
+            : "TODAVIA NO SOY TAN PUTO Y NECESITO MAS MOTIVOS"}
+        </button>
       </div>
     </div>
   );
