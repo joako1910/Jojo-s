@@ -48,7 +48,7 @@ export function Page() {
 
         <button
           onClick={fetchMotivo}
-          className="mt-8 px-8 py-4 bg_black text-black-500 bg-yellow-100 font-bold text-xl border-4 border-yellow-300 hover:scale-110 hover:bg-yellow-300 gover:text-black transition duration-300"
+          className="mt-8 px-8 py-4 bg-yellow-100 text-black font-bold text-xl border-4 border-yellow-300 hover:scale-110 hover:bg-yellow-300 hover:text-black transition duration-300"
         >
           {loading
             ? "Generando motivo ..."

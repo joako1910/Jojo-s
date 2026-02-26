@@ -8,12 +8,22 @@ const HF_TOKEN = process.env.HF_API_KEY;
 const PORT = process.env.PORT || 5000;
 
 const server = http.createServer(async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   const { pathname } = parse(req.url, true);
 
   if (pathname === "/api/motivos") {
     try {
       const hfResponse = await fetch(
-        "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-125M",
+        "https://router.huggingface.co/v1/chat/completions",
         {
           method: "POST",
           headers: {
@@ -21,20 +31,37 @@ const server = http.createServer(async (req, res) => {
             Authorization: `Bearer ${HF_TOKEN}`,
           },
           body: JSON.stringify({
-            inputs:
-              "Genera un motivo divertido por el que alguien debería ver JoJo's Bizarre Adventure",
-            options: { wait_for_model: true },
+            model: "meta-llama/Llama-3.1-8B-Instruct",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "Eres un fanático entusiasta de JoJo's Bizarre Adventure. Tu tarea es dar un motivo divertido y corto (máximo un párrafo) por el cual alguien debería ver el anime.",
+              },
+              {
+                role: "user",
+                content: "Dame un motivo para ver JoJo's.",
+              },
+            ],
+            max_tokens: 100,
           }),
         },
       );
+
       const data = await hfResponse.json();
-      console.log("HF RESPONSE:", data);
-      console.log("PATHNAME:", pathname);
-      const motivo = data.generated_text || "No se generó texto";
+      console.log("HF RESPONSE:", JSON.stringify(data, null, 2));
+
+      let motivo = "No se generó texto";
+      if (data.choices && data.choices.length > 0 && data.choices[0].message) {
+        motivo = data.choices[0].message.content.trim();
+      } else if (data.error) {
+        throw new Error(data.error.message || JSON.stringify(data.error));
+      }
 
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ motivo }));
     } catch (err) {
+      console.error("SERVER ERROR:", err.message);
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: err.message }));
     }
